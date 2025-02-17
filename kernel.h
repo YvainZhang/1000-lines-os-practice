@@ -5,6 +5,8 @@
 // 应用程序镜像的基础虚拟地址。这需要与 `user.ld` 中定义的起始地址匹配。
 #define USER_BASE 0x1000000
 
+#define PROC_EXITED   2
+#define SCAUSE_ECALL 8
 #define SSTATUS_SPIE (1 << 5)
 #define SATP_SV32 (1u << 31)
 #define PAGE_V    (1 << 0)   // "Valid" 位（表项已启用）
