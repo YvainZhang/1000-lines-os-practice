@@ -16,6 +16,7 @@
 
 - Timer：观察 tick 确实前进。
 - Block IRQ：文件写回触发磁盘完成中断。
+- Filesystem capacity：超过总缓冲区容量的写入被拒绝，已有数据保持不变。
 - Pipe：通过 256 字节缓冲传送 3072 字节，核对顺序、总长度和 EOF。
 - Preemption：把两个 worker 绑定同核，纯计算任务不主动 yield，短任务仍先返回。
 - SMP：每个 hart 启动绑定任务，检查实际执行核。

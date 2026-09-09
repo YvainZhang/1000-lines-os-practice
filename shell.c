@@ -197,6 +197,44 @@ static bool test_block_irq(void) {
     return true;
 }
 
+static bool test_file_capacity(void) {
+    char original_hello[1024];
+    char original_meow[1024];
+    char payload[1024];
+    char actual[1024];
+    int hello_len = readfile("hello.txt", original_hello, sizeof(original_hello));
+    int meow_len = readfile("meow.txt", original_meow, sizeof(original_meow));
+    if (hello_len < 0 || meow_len < 0)
+        return selftest_fail("file-capacity-backup");
+
+    memset(payload, 'C', sizeof(payload));
+    bool ok = writefile("meow.txt", payload, 0) == 0;
+    if (ok)
+        ok = writefile("hello.txt", payload, sizeof(payload)) == sizeof(payload);
+    if (ok)
+        ok = writefile("meow.txt", payload, sizeof(payload)) == -1;
+    if (ok)
+        ok = readfile("meow.txt", actual, sizeof(actual)) == 0;
+    if (ok)
+        ok = readfile("hello.txt", actual, sizeof(actual)) == sizeof(payload);
+    for (int i = 0; ok && i < (int) sizeof(payload); i++) {
+        if (actual[i] != payload[i])
+            ok = false;
+    }
+
+    // Shrink both files before restoring their original combined footprint.
+    bool restored = writefile("meow.txt", payload, 0) == 0;
+    if (writefile("hello.txt", payload, 0) != 0)
+        restored = false;
+    if (writefile("hello.txt", original_hello, hello_len) != hello_len)
+        restored = false;
+    if (writefile("meow.txt", original_meow, meow_len) != meow_len)
+        restored = false;
+    if (!restored)
+        return selftest_fail("file-capacity-restore");
+    return ok ? true : selftest_fail("file-capacity-boundary");
+}
+
 static bool test_pipe_stream(void) {
     int fd = pipe_open(SELFTEST_STREAM_KEY, PIPE_READ | PIPE_CREATE);
     if (fd < 0)
@@ -334,6 +372,9 @@ static void run_selftest(void) {
     if (!test_block_irq())
         return;
     printf("[PASS] VirtIO block interrupt\n");
+    if (!test_file_capacity())
+        return;
+    printf("[PASS] filesystem capacity and rejected-write integrity\n");
     if (!test_pipe_stream())
         return;
     printf("[PASS] pipe stream: 3072 bytes and EOF\n");

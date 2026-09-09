@@ -129,6 +129,7 @@ void wakeup(void *channel);
 void read_write_disk(void *buf, unsigned sector, int is_write);
 struct file *fs_lookup(const char *filename);
 void fs_flush(void);
+static bool fs_can_resize(struct file *target, size_t new_size);
 void virtio_handle_irq(void);
 void kernel_entry(void);
 void secondary_boot(void);
@@ -897,6 +898,11 @@ static void handle_syscall(struct trap_frame *f) {
             if (f->a3 == SYS_WRITEFILE) {
                 if (len > (int) sizeof(file->data))
                     len = sizeof(file->data);
+                if (!fs_can_resize(file, (size_t) len)) {
+                    mutex_unlock(&fs_mutex);
+                    f->a0 = -1;
+                    break;
+                }
                 if (!user_access_ok(proc, f->a1, len, false)) {
                     mutex_unlock(&fs_mutex);
                     f->a0 = -1;
@@ -1371,6 +1377,8 @@ static void fs_init(void) {
         int filesz = oct2int(header->size, sizeof(header->size));
         if (filesz < 0 || filesz > (int) sizeof(files[i].data))
             PANIC("file too large: %s", header->name);
+        if ((unsigned) filesz > sizeof(disk) - off - sizeof(*header))
+            PANIC("file data exceeds filesystem buffer");
         struct file *file = &files[i];
         file->in_use = true;
         strcpy(file->name, header->name);
@@ -1379,6 +1387,21 @@ static void fs_init(void) {
         printf("file: %s, size=%d\n", file->name, file->size);
         off += align_up(sizeof(struct tar_header) + filesz, SECTOR_SIZE);
     }
+}
+
+// Called with fs_mutex held, before changing file data or size.
+static bool fs_can_resize(struct file *target, size_t new_size) {
+    size_t used = 0;
+    for (int i = 0; i < FILES_MAX; i++) {
+        if (!files[i].in_use)
+            continue;
+        size_t size = &files[i] == target ? new_size : files[i].size;
+        size_t span = align_up(sizeof(struct tar_header) + size, SECTOR_SIZE);
+        if (span > sizeof(disk) - used)
+            return false;
+        used += span;
+    }
+    return true;
 }
 
 void fs_flush(void) {

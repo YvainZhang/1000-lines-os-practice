@@ -29,8 +29,11 @@ def run(ncpu, timeout):
             nonlocal pending
             deadline = time.monotonic() + timeout
             while True:
-                if re.search(rb'SELFTEST FAIL|PANIC|unexpected trap', pending, re.I):
-                    raise RuntimeError('guest reported failure')
+                failure = re.search(
+                    rb'(?:SELFTEST FAIL|PANIC|unexpected trap)[^\r\n]*[\r\n]',
+                    pending, re.I)
+                if failure:
+                    raise RuntimeError(failure.group().decode(errors='replace').strip())
                 if marker in pending:
                     pending = pending.split(marker, 1)[1]
                     return

@@ -47,7 +47,7 @@ python3 scripts/smoke.py --cpus 4
 
 比较 online 核数和 `worker affinity on all N hart(s)`。阅读 `test_all_harts`：每个 worker 返回期望 hart 与实际 hart，并检查重复和缺失。只看 QEMU 启动参数不能证明每个核都在执行用户任务。
 
-加做：运行 `python3 scripts/smoke.py --cpus 3`，保存实际结果。这是课程练习；既有验证记录仅覆盖 1/2/4 核，不预先为本次 3 核运行背书。
+加做：运行 `python3 scripts/smoke.py --cpus 3`，保存实际结果，并与验证记录中的推送前四配置回归比较。既有结果不能代替你修改代码后的重新验证。
 
 ## 验收与思考
 

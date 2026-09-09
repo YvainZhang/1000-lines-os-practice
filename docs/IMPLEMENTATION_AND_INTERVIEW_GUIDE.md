@@ -255,6 +255,7 @@ git status --short
 |---|---|---|
 | timer | 循环查询 tick，要求发生变化 | SBI timer 已投递且计数前进 |
 | block IRQ | 读取 `hello.txt`，把同样字节原样 `writefile` 回去 | `fs_flush` 触发 VirtIO 写且 block IRQ 计数增长；不证明重启持久化 |
+| filesystem capacity | 一个文件扩展到 1024 字节后，拒绝另一个文件的超总容量写入，核对内容并恢复 | 总容量包含 tar 头与扇区填充，拒绝写入发生在修改文件之前 |
 | pipe stream | 未绑定 writer 以 127 字节块发送 3 KiB，reader 以 83 字节块读取 | short read/write 循环、环形回绕、阻塞唤醒、字节顺序、总长度、EOF，以及未绑定任务的调度路径 |
 | preemption | quick 与无 yield 的 CPU hog 固定在同一 hart，要求 `Q` 先于 `H` | hog 的纯计算区间能被 timer 抢占 |
 | all harts | 为每个配置 hart 启动一个 affinity worker | 1/2/4 hart 均上线，任务实际运行 hart 与绑定值一致且无重复结果 |
