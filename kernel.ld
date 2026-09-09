@@ -15,6 +15,8 @@ SECTIONS {
 
     .data : ALIGN(4) {
         *(.data .data.*);
+        PROVIDE(__global_pointer$ = . + 0x800);
+        *(.sdata .sdata.*);
     }
 
     .bss : ALIGN(4) {
@@ -23,9 +25,13 @@ SECTIONS {
         __bss_end = .;
     }
 
-    . = ALIGN(4);
-    . += 128 * 1024; /* 128KB */
-    __stack_top = .;
+    /* Four independent 32KiB boot/scheduler stacks, indexed by hart ID. */
+    . = ALIGN(16);
+    .stack (NOLOAD) : ALIGN(16) {
+        __stack_bottom = .;
+        . += 4 * 32 * 1024;
+        __stack_top = .;
+    }
 
     . = ALIGN(4096);
     __free_ram = .;

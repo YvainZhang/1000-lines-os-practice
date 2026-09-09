@@ -37,6 +37,46 @@ int writefile(const char *filename, const char *buf, int len) {
     return syscall(SYS_WRITEFILE, (int) filename, (int) buf, len);
 }
 
+int pipe_open(int key, int mode) {
+    return syscall(SYS_PIPE_OPEN, key, mode, 0);
+}
+
+int pipe_read(int fd, void *buf, int len) {
+    return syscall(SYS_PIPE_READ, fd, (int) buf, len);
+}
+
+int pipe_write(int fd, const void *buf, int len) {
+    return syscall(SYS_PIPE_WRITE, fd, (int) buf, len);
+}
+
+int pipe_close(int fd) {
+    return syscall(SYS_PIPE_CLOSE, fd, 0, 0);
+}
+
+int spawn(void (*entry)(int), int arg, int hart) {
+    return syscall(SYS_SPAWN, (int) entry, arg, hart);
+}
+
+int get_hartid(void) {
+    return syscall(SYS_GET_HARTID, 0, 0, 0);
+}
+
+int get_ncpu(void) {
+    return syscall(SYS_GET_NCPU, 0, 0, 0);
+}
+
+int get_ticks(void) {
+    return syscall(SYS_GET_TICKS, 0, 0, 0);
+}
+
+int get_irq_count(int which) {
+    return syscall(SYS_GET_IRQ_COUNT, which, 0, 0);
+}
+
+void yield(void) {
+    syscall(SYS_YIELD, 0, 0, 0);
+}
+
 __attribute__((section(".text.start")))
 __attribute__((naked))
 void start(void) {

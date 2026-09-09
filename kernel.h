@@ -5,9 +5,18 @@
 // 应用程序镜像的基础虚拟地址。这需要与 `user.ld` 中定义的起始地址匹配。
 #define USER_BASE 0x1000000
 
-#define PROC_EXITED   2
-#define SCAUSE_ECALL 8
+#define SCAUSE_INTERRUPT (1u << 31)
+#define SCAUSE_ECALL     8
+#define IRQ_S_SOFTWARE   1
+#define IRQ_S_TIMER      5
+#define IRQ_S_EXTERNAL   9
+
+#define SSTATUS_SIE  (1 << 1)
 #define SSTATUS_SPIE (1 << 5)
+#define SSTATUS_SPP  (1 << 8)
+#define SIE_SSIE     (1 << 1)
+#define SIE_STIE     (1 << 5)
+#define SIE_SEIE     (1 << 9)
 #define SATP_SV32 (1u << 31)
 #define PAGE_V    (1 << 0)   // "Valid" 位（表项已启用）
 #define PAGE_R    (1 << 1)   // 可读
@@ -47,6 +56,11 @@ struct trap_frame {
     uint32_t s10;
     uint32_t s11;
     uint32_t sp;
+    uint32_t sepc;
+    uint32_t sstatus;
+    uint32_t scause;
+    uint32_t stval;
+    uint32_t reserved;
 } __attribute__((packed));
 
 #define READ_CSR(reg)                                                          \
@@ -60,6 +74,18 @@ struct trap_frame {
     do {                                                                       \
         uint32_t __tmp = (value);                                              \
         __asm__ __volatile__("csrw " #reg ", %0" ::"r"(__tmp));                \
+    } while (0)
+
+#define SET_CSR(reg, bits)                                                     \
+    do {                                                                       \
+        uint32_t __tmp = (bits);                                               \
+        __asm__ __volatile__("csrs " #reg ", %0" : : "r"(__tmp) : "memory"); \
+    } while (0)
+
+#define CLEAR_CSR(reg, bits)                                                   \
+    do {                                                                       \
+        uint32_t __tmp = (bits);                                               \
+        __asm__ __volatile__("csrc " #reg ", %0" : : "r"(__tmp) : "memory"); \
     } while (0)
 
 typedef unsigned char uint8_t;
@@ -84,6 +110,9 @@ struct sbiret {
 #define VIRTIO_REG_MAGIC         0x00
 #define VIRTIO_REG_VERSION       0x04
 #define VIRTIO_REG_DEVICE_ID     0x08
+#define VIRTIO_REG_DEVICE_FEATURES 0x10
+#define VIRTIO_REG_GUEST_FEATURES  0x20
+#define VIRTIO_REG_GUEST_PAGE_SIZE 0x28
 #define VIRTIO_REG_QUEUE_SEL     0x30
 #define VIRTIO_REG_QUEUE_NUM_MAX 0x34
 #define VIRTIO_REG_QUEUE_NUM     0x38
@@ -91,6 +120,8 @@ struct sbiret {
 #define VIRTIO_REG_QUEUE_PFN     0x40
 #define VIRTIO_REG_QUEUE_READY   0x44
 #define VIRTIO_REG_QUEUE_NOTIFY  0x50
+#define VIRTIO_REG_INTERRUPT_STATUS 0x60
+#define VIRTIO_REG_INTERRUPT_ACK    0x64
 #define VIRTIO_REG_DEVICE_STATUS 0x70
 #define VIRTIO_REG_DEVICE_CONFIG 0x100
 #define VIRTIO_STATUS_ACK       1

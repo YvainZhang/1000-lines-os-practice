@@ -16,6 +16,26 @@ typedef uint32_t vaddr_t;
 #define SYS_EXIT    3
 #define SYS_READFILE  4
 #define SYS_WRITEFILE 5
+#define SYS_PIPE_OPEN  6
+#define SYS_PIPE_READ  7
+#define SYS_PIPE_WRITE 8
+#define SYS_PIPE_CLOSE 9
+#define SYS_SPAWN      10
+#define SYS_GET_HARTID 11
+#define SYS_GET_NCPU   12
+#define SYS_GET_TICKS  13
+#define SYS_GET_IRQ_COUNT 14
+#define SYS_YIELD      15
+
+#define PIPE_READ   1
+#define PIPE_WRITE  2
+#define PIPE_CREATE 4
+
+#define IRQ_TIMER          0
+#define IRQ_UART           1
+#define IRQ_BLOCK          2
+#define IRQ_CONTEXT_SWITCH 3
+#define IRQ_UART_RX_DROPPED 4
 
 #define true  1
 #define false 0
